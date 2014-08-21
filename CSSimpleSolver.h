@@ -24,6 +24,11 @@ typedef Cholmod_Solver::Dense_matrix DenseMatrix;
 typedef Cholmod_Solver::Sparse_matrix SparseMatrix;
 */
 
+
+/*
+Solver for the Following Compressed Sensing Model:
+Ax + e = b, where A(m, n) : m>n; e is sparse.
+*/
 class CSSimpleSolver
 {
 public:
@@ -35,10 +40,13 @@ public:
 	bool L1Solver(vector<vector<double>> &A, vector<double> &b);
 	bool OMPSolver(vector<vector<double>> &A, vector<double> &b);
 
+	bool solve(vector<vector<double>> &A, vector<double> &b, vector<double>& e);
+
 //private:
 	//cholmod_common c;
 	vector<vector<double>> nullSpace(const vector<vector<double>> &A);
 	vector<vector<double>> leftNullSpace(const vector<vector<double>> &A);
 	void print_matrix( char* desc, int m, int n, double* a, int lda );
+	bool multiply_matrix(vector<vector<double>> &A, vector<vector<double>> &B, vector<vector<double>> &C);
 };
 #endif

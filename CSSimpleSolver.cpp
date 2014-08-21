@@ -11,8 +11,7 @@ bool CSSimpleSolver::parser(FILE *f, vector<vector<double>> &A, vector<double> &
 
 bool CSSimpleSolver::L1Solver(vector<vector<double>> &A, vector<double> &b)
 {
-	// Find a proper left null space of A : F
-	//-- [Assume that F is sparse...] --//
+	// Find a proper left null space of A, F, s.t. FA = 0;
 	vector<vector<double>> F = leftNullSpace(A);
 	return false;
 }
@@ -20,6 +19,32 @@ bool CSSimpleSolver::L1Solver(vector<vector<double>> &A, vector<double> &b)
 bool CSSimpleSolver::OMPSolver(vector<vector<double>> &A, vector<double> &b)
 {
 	return false;
+}
+
+/*This function solves for Compressed Sensing Model 2, which is Ax + e = b.
+	A is m by n matrix, where m>n;
+	e is the error vector to be minimized, which is sparse;
+	b is the measurement vector.
+*/
+bool CSSimpleSolver::solve(vector<vector<double>> &A, vector<double> &b, vector<double> &e) 
+{
+	// First we need to eliminate A
+	vector<vector<double>> F = leftNullSpace(A);
+	if(F.size() != 0) {
+		// Then we do the l1-minimization for e, s.t. Fe = Fb.
+		vector<vector<double>> Y;
+		vector<vector<double>> B;
+		B.push_back(b);
+		multiply_matrix(F, B, Y);
+
+		// Then we solve for min|e|, s.t. Fe = Y.
+
+
+
+	} else {
+		printf("The left nullspace of A is empty!!!\n");
+		return false;
+	} 
 }
 
 // Compute Ax = 0, return basis vectors of solution space 
@@ -187,37 +212,77 @@ void CSSimpleSolver::print_matrix( char* desc, int m, int n, double* a, int lda 
                 printf( "\n" );
         }
 }
+
+bool CSSimpleSolver::multiply_matrix(vector<vector<double>> &A, vector<vector<double>> &B, vector<vector<double>> &C)
+{
+	if(A.size() == 0 || B.size() == 0) return false;
+	int k = A[0].size();
+	if(k != B.size()) {
+		printf("Cannot multiply by two dismatching matrices,");
+		return false;
+	} else {
+		int m = A.size();
+		int n = B[0].size();
+		for(int mm = 0; mm<m; mm++) {
+			C.push_back(vector<double>());
+			for(int nn=0; nn<n; nn++) {
+				double sum = 0.0;
+				for(int kk=0; kk<k; kk++) {
+					sum += A[mm][kk]*B[kk][nn];
+				}
+				C[mm].push_back(sum); sum = 0.0;
+			}
+		}
+		return true;
+	}
+}
 //--- For test ---//
 int main()
 {
-	// Test nullSpace()
-	vector<vector<double>> A;
-	double a0[] = {-1, 1, 2, 4};
-	double a1[] = {2, 0, 1, -7};
-	vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
-	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
-	A.push_back(A0); A.push_back(A1);
-
-	//// Test leftNullSpace()
+	//// Test nullSpace()
 	//vector<vector<double>> A;
-	//double a0[] = {-1, 2};
-	//double a1[] = {1, 0};
-	//double a2[] = {2, 1};
-	//double a3[] = {4, -7};
+	//double a0[] = {-1, 1, 2, 4};
+	//double a1[] = {2, 0, 1, -7};
 	//vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
 	//vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
-	//vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
-	//vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
-	//A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);
+	//A.push_back(A0); A.push_back(A1);
+
+	// Test leftNullSpace()
+	vector<vector<double>> A;
+	double a0[] = {-1, 2};
+	double a1[] = {1, 0};
+	double a2[] = {2, 1};
+	double a3[] = {4, -7};
+	vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
+	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
+	vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
+	vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
+	A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);
 
 
 	CSSimpleSolver css;
-	vector<vector<double>> x = css.leftNullSpace(A);
+	/*vector<vector<double>> x = css.leftNullSpace(A);
 	for(int i=0; i<x.size(); i++) {
 		for(int j=0; j<x[0].size()-1; j++) {
 			cout << x[i][j] << "\t" ;
 		}
 		cout << x[i][x[0].size()-1] << endl;
+	}*/
+
+	// Test matrix multiplication
+	vector<vector<double>> B;
+	double b0[] = {1};
+	double b1[] = {2};
+	vector<double> B0(b0, b0 + sizeof(b0)/sizeof(double));
+	vector<double> B1(b1, b1 + sizeof(b1)/sizeof(double));
+	B.push_back(B0); B.push_back(B1);
+	vector<vector<double>> C;
+	css.multiply_matrix(A, B, C);
+	for(int i=0; i<C.size(); i++) {
+		for(int j=0; j<C[0].size(); j++) {
+			cout << C[i][j] << "\t";
+		}
+		cout << endl;
 	}
 	return 0;
 }
