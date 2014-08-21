@@ -24,7 +24,7 @@ bool CSSimpleSolver::OMPSolver(vector<vector<double>> &A, vector<double> &b)
 
 // Compute Ax = 0, return basis vectors of solution space 
 // A is assumed to be sparse matrix
-vector<vector<double>>& CSSimpleSolver::nullSpace(const vector<vector<double>> &A)
+vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A)
 {
 	vector<vector<double>> tem;
 	if(!A.empty()) {
@@ -60,9 +60,80 @@ vector<vector<double>>& CSSimpleSolver::nullSpace(const vector<vector<double>> &
 			//cout << "Matrix format error!" << endl;
 		//}
 		*/
+
+		/* Use lapacke to compute nullspace by calling SVD */
+		double* a = new double[m*n];
+		int aIndex = 0;
+		for(int i=0; i<m; i++) {
+			for(int j=0; j<n; j++) {
+				a[aIndex++] = A[i][j];
+			}
+		}
+
+		double* s = new double[n];
+		double* u = new double[m*m];
+		double* vt = new double[n*n];
+		double* superb = new double[min(m, n) -1];
+		int lda = max(m ,n), ldu = m, ldvt = n, info;
+
+		// Compute SVD
+		info = LAPACKE_dgesvd( LAPACK_ROW_MAJOR, 'A', 'A', m, n, a, lda,
+                        s, u, ldu, vt, ldvt, superb);
+
+		// Check result
+		if(info > 0) {
+			printf("Error in computing nullspace: SVD failed to converge!\n");
+			exit(-1);
+		}
+
+		print_matrix("U: ", m, n, u, m);
+		print_matrix("Singular Values: ", 1, n, s, 1);
+		print_matrix("VT: ", n, n, vt, n);
+
+		// Define a very small value eps, and set the lower bound to eps*min(m, n), which is similar to Matlab implementation
+		//double eps = std::numeric_limits<float>::denorm_min()*max(l_m, l_n);
+		double eps = 0.00000000001;
+		printf("eps is %1.11f\n", eps);
+		// Check the small enough singular values to get the corresponding nullspace vectors
+		int startIndex = 0;
+		for(int i=n-1; i>=0; i--) {
+			if(s[i] - eps < eps) continue;
+			else {
+				startIndex = i+1;
+				break;
+			}
+		}
+
+		/*for (int i = 0; i < l_n; i++) {
+			if (s[i] > eps) continue;
+			else {
+				startIndex = i;
+			}
+		}*/
+
+		/*int vStart = startIndex*n;
+		int vEnd = n*n;
+		double* null;
+		for(int i = vStart; i<vEnd; i++) {
+			null[i-vStart] = vt[i];
+		}*/
+
+		delete s, u, vt;
+		printf("startIndex %d\n", startIndex);
+
+		// Construct nullspace matrix
+		int vIndex = startIndex*n;
+		for(int i=0; i<n-startIndex; i++) {
+			tem.push_back(vector<double>());
+			for(int j=0; j<n; j++) {
+				tem[i].push_back(vt[vIndex++]);
+			}
+		}
+		
 	} else {
 		cout << "Null pointer of A in computing nullspace!" << endl;
 	}
+	cout << "tem size: " << tem.size() << endl;
 	return tem;
 }
 
@@ -100,7 +171,14 @@ vector<vector<double>>& CSSimpleSolver::leftNullSpace(const vector<vector<double
 	return F;
 }
 
-
+void CSSimpleSolver::print_matrix( char* desc, int m, int n, double* a, int lda ) {
+        lapack_int i, j;
+        printf( "\n %s\n", desc );
+        for( i = 0; i < m; i++ ) {
+                for( j = 0; j < n; j++ ) printf( " %6.8f", a[i*lda+j] );
+                printf( "\n" );
+        }
+}
 //--- For test ---//
 int main()
 {
