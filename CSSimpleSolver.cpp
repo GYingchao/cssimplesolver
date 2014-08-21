@@ -27,7 +27,7 @@ bool CSSimpleSolver::OMPSolver(vector<vector<double>> &A, vector<double> &b)
 vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A)
 {
 	vector<vector<double>> tem;
-	if(!A.empty()) {
+	if(A.size() != 0) {
 		int m = A.size();
 		int n = A[0].size();
 		/*
@@ -86,14 +86,14 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 			exit(-1);
 		}
 
-		print_matrix("U: ", m, n, u, m);
+		/*print_matrix("U: ", m, n, u, m);
 		print_matrix("Singular Values: ", 1, n, s, 1);
-		print_matrix("VT: ", n, n, vt, n);
+		print_matrix("VT: ", n, n, vt, n);*/
 
 		// Define a very small value eps, and set the lower bound to eps*min(m, n), which is similar to Matlab implementation
 		//double eps = std::numeric_limits<float>::denorm_min()*max(l_m, l_n);
 		double eps = 0.00000000001;
-		printf("eps is %1.11f\n", eps);
+		//printf("eps is %1.11f\n", eps);
 		// Check the small enough singular values to get the corresponding nullspace vectors
 		int startIndex = 0;
 		for(int i=n-1; i>=0; i--) {
@@ -119,7 +119,11 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 		}*/
 
 		delete s, u, vt;
-		printf("startIndex %d\n", startIndex);
+		//printf("startIndex %d\n", startIndex);
+		if(startIndex == n) {
+			cout << "The nullspace of matrix is empty!" << endl;
+			return tem;
+		}
 
 		// Construct nullspace matrix
 		int vIndex = startIndex*n;
@@ -135,7 +139,7 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 	} else {
 		cout << "Null pointer of A in computing nullspace!" << endl;
 	}
-	cout << "tem size: " << tem.size() << endl;
+	//cout << "tem size: " << tem.size() << endl;
 	return tem;
 }
 
@@ -160,7 +164,7 @@ vector<vector<double>> CSSimpleSolver::leftNullSpace(const vector<vector<double>
 
 	vector<vector<double>> x = nullSpace(A_T);
 
-	if(!x.empty()) {
+	if(x.size() != 0) {
 		int xm = x.size();
 		int xn = x[0].size();
 		for(int i=0; i<xn; i++) {
@@ -186,25 +190,25 @@ void CSSimpleSolver::print_matrix( char* desc, int m, int n, double* a, int lda 
 //--- For test ---//
 int main()
 {
-	//// Test nullSpace()
-	//vector<vector<double>> A;
-	//double a0[] = {-1, 1, 2, 4};
-	//double a1[] = {2, 0, 1, -7};
-	//vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
-	//vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
-	//A.push_back(A0); A.push_back(A1);
-
-	// Test leftNullSpace()
+	// Test nullSpace()
 	vector<vector<double>> A;
-	double a0[] = {-1, 2};
-	double a1[] = {1, 0};
-	double a2[] = {2, 1};
-	double a3[] = {4, -7};
+	double a0[] = {-1, 1, 2, 4};
+	double a1[] = {2, 0, 1, -7};
 	vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
 	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
-	vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
-	vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
-	A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);
+	A.push_back(A0); A.push_back(A1);
+
+	//// Test leftNullSpace()
+	//vector<vector<double>> A;
+	//double a0[] = {-1, 2};
+	//double a1[] = {1, 0};
+	//double a2[] = {2, 1};
+	//double a3[] = {4, -7};
+	//vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
+	//vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
+	//vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
+	//vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
+	//A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);
 
 
 	CSSimpleSolver css;
