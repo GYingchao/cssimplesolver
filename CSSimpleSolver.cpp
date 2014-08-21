@@ -123,9 +123,11 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 
 		// Construct nullspace matrix
 		int vIndex = startIndex*n;
-		for(int i=0; i<n-startIndex; i++) {
+		//for(int i=0; i<n-startIndex; i++) {
+		for(int i=0; i<n; i++) {
 			tem.push_back(vector<double>());
-			for(int j=0; j<n; j++) {
+			//for(int j=0; j<n; j++) {
+			for(int j=0; j<n-startIndex; j++) {
 				tem[i].push_back(vt[vIndex++]);
 			}
 		}
@@ -138,7 +140,7 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 }
 
 // Compute FA = 0, return proper F.
-vector<vector<double>>& CSSimpleSolver::leftNullSpace(const vector<vector<double>> &A)
+vector<vector<double>> CSSimpleSolver::leftNullSpace(const vector<vector<double>> &A)
 {
 	/*
 		Naively:
@@ -150,8 +152,9 @@ vector<vector<double>>& CSSimpleSolver::leftNullSpace(const vector<vector<double
 	int m = A.size();
 	int n = A[0].size();
 	for(int i=0; i<n; i++) {
+		A_T.push_back(vector<double>());
 		for(int j=0; j<m; j++) {
-			A_T[i][j] = A[j][i];
+			A_T[i].push_back(A[j][i]);
 		}
 	}
 
@@ -161,8 +164,9 @@ vector<vector<double>>& CSSimpleSolver::leftNullSpace(const vector<vector<double
 		int xm = x.size();
 		int xn = x[0].size();
 		for(int i=0; i<xn; i++) {
+			F.push_back(vector<double>());
 			for(int j=0; j<xm; j++) {
-				F[i][j] = x[j][i];
+				F[i].push_back(x[j][i]);
 			}
 		}
 	} else {
@@ -182,16 +186,29 @@ void CSSimpleSolver::print_matrix( char* desc, int m, int n, double* a, int lda 
 //--- For test ---//
 int main()
 {
-	// Test nullSpace()
+	//// Test nullSpace()
+	//vector<vector<double>> A;
+	//double a0[] = {-1, 1, 2, 4};
+	//double a1[] = {2, 0, 1, -7};
+	//vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
+	//vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
+	//A.push_back(A0); A.push_back(A1);
+
+	// Test leftNullSpace()
 	vector<vector<double>> A;
-	double a0[] = {-1, 1, 2, 4};
-	double a1[] = {2, 0, 1, -7};
+	double a0[] = {-1, 2};
+	double a1[] = {1, 0};
+	double a2[] = {2, 1};
+	double a3[] = {4, -7};
 	vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
 	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
-	A.push_back(A0); A.push_back(A1);
+	vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
+	vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
+	A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);
+
 
 	CSSimpleSolver css;
-	vector<vector<double>> x = css.nullSpace(A);
+	vector<vector<double>> x = css.leftNullSpace(A);
 	for(int i=0; i<x.size(); i++) {
 		for(int j=0; j<x[0].size()-1; j++) {
 			cout << x[i][j] << "\t" ;

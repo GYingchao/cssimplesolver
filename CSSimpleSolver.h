@@ -38,7 +38,7 @@ public:
 //private:
 	//cholmod_common c;
 	vector<vector<double>> nullSpace(const vector<vector<double>> &A);
-	vector<vector<double>>& leftNullSpace(const vector<vector<double>> &A);
+	vector<vector<double>> leftNullSpace(const vector<vector<double>> &A);
 	void print_matrix( char* desc, int m, int n, double* a, int lda );
 };
 #endif
