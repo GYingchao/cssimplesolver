@@ -21,12 +21,128 @@ bool CSSimpleSolver::OMPSolver(vector<vector<double>> &A, vector<double> &b)
 	return false;
 }
 
+/*
+This solver handles canonical form of LP optimization problem, as follows:
+	min CT*x
+	s.t. Ax >= b
+		  x >= 0;
+*/
+bool CSSimpleSolver::LPSolver(vector<vector<double>> &A, vector<double> &b, vector<double> &CT, vector<double> &x, double &optimal)
+{
+	/*
+		Input: Constraint matrix A, vector b and objective function CT.
+		output: optimal solution x.
+		if return = TRUE, x is optimal; otherwise, x may not have meaningful value.
+	*/
+	if(!A.empty()) {
+		// Init
+		const int m = A.size(), n = A[0].size();
+		lprec *lp;
+		int *colno = NULL, i, j, ret = 0;
+		REAL *row = NULL;
+		lp = make_lp(0, n);		// We will add the rows one by one
+
+		if(lp != NULL) {
+			// Move on to load the canonical model
+			if(ret == 0) {
+				/* create space large enough for one row */
+				colno = (int *) malloc(n * sizeof(*colno));
+				row = (REAL *) malloc(n * sizeof(*row));
+				if((colno == NULL) || (row == NULL))
+					ret = 1;
+			}
+			// Set constraints
+			if(ret == 0) {
+				set_add_rowmode(lp, TRUE);  /* makes building the model faster if it is done rows by row */
+				// Construct the rows of A
+				for(i=0; i<m; i++) {
+					for(j=0; j<n; j++) {
+						colno[j] = j+1;		// May not be efficient in sparse matrix
+						row[j] = A[i][j];
+					}
+					/* add the row to lpsolve */
+					if(!add_constraintex(lp, n, row, colno, GE, b[i])) {
+						ret = 3;
+						printf("Error: Cannot add constrait in %d row of A!", j);
+						break;
+					}
+				}
+			}
+			// Set objective function
+			if(ret == 0) {
+				// Construct the objective function 
+				set_add_rowmode(lp, FALSE); /* rowmode should be turned off again when done building the model */
+				for(j=0; j<n; j++) {
+					colno[j] = j+1;		// May not be efficient in sparse matrix
+					row[j] = CT[j];
+				}
+				 /* set the objective in lpsolve */
+				if(!set_obj_fnex(lp, n, row, colno))
+				  ret = 4;
+			}
+			// Call the solver
+			if(ret == 0) {
+				/* set the object direction to maximize */
+				set_minim(lp);
+
+				/* just out of curioucity, now show the model in lp format on screen */
+				/* this only works if this is a console application. If not, use write_lp and a filename */
+				// write_LP(lp, stdout);		Problematic
+
+				/* I only want to see important messages on screen while solving */
+				set_verbose(lp, IMPORTANT);
+
+				/* Now let lpsolve calculate a solution */
+				ret = solve(lp);
+				if(ret == OPTIMAL)
+				  ret = 0;
+				else
+				  ret = 1;
+			}
+			// Output optimal solution
+			if(ret == 0) {
+				/* a solution is calculated, now lets get some results */
+
+				/* objective value */
+				//printf("Objective value: %f\n", get_objective(lp));
+				optimal = get_objective(lp);
+
+				/* variable values */
+				get_variables(lp, row);
+				for(j = 0; j < n; j++) x.push_back(row[j]);
+				  //printf("%s: %f\n", get_col_name(lp, j + 1), row[j]);
+
+				// Save the model for reuse
+				write_lp(lp, "model.lp"); 
+				/* we are done now */
+			}
+			// Clear local memory
+			if(row != NULL)
+				free(row);
+			if(colno != NULL)
+				free(colno);
+			if(lp != NULL) {
+				/* clean up such that all used memory by lpsolve is freed */
+				delete_lp(lp);
+			}
+			return true;
+		} else {
+			ret = 1;
+			printf("Error: Failed to create lp!");
+			return false;
+		}
+	} else {
+		cout << "Error: Constraint matrix A is empty when solving LP!" << endl;
+		return false;
+	}
+}
+
 /*This function solves for Compressed Sensing Model 2, which is Ax + e = b.
 	A is m by n matrix, where m>n;
 	e is the error vector to be minimized, which is sparse;
 	b is the measurement vector.
 */
-bool CSSimpleSolver::solve(vector<vector<double>> &A, vector<double> &b, vector<double> &e) 
+bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<double> &e) 
 {
 	// First we need to eliminate A
 	vector<vector<double>> F = leftNullSpace(A);
@@ -248,7 +364,7 @@ int main()
 	//A.push_back(A0); A.push_back(A1);
 
 	// Test leftNullSpace()
-	vector<vector<double>> A;
+	/*vector<vector<double>> A;
 	double a0[] = {-1, 2};
 	double a1[] = {1, 0};
 	double a2[] = {2, 1};
@@ -257,7 +373,7 @@ int main()
 	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
 	vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
 	vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
-	A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);
+	A.push_back(A0); A.push_back(A1); A.push_back(A2); A.push_back(A3);*/
 
 
 	CSSimpleSolver css;
@@ -270,7 +386,7 @@ int main()
 	}*/
 
 	// Test matrix multiplication
-	vector<vector<double>> B;
+	/*vector<vector<double>> B;
 	double b0[] = {1};
 	double b1[] = {2};
 	vector<double> B0(b0, b0 + sizeof(b0)/sizeof(double));
@@ -283,6 +399,29 @@ int main()
 			cout << C[i][j] << "\t";
 		}
 		cout << endl;
-	}
+	}*/
+
+	// Test LPSolver()
+	double a0[] = {-120, -210};
+	double a1[] = {-110, -30};
+	double a2[] = {-1, -1};
+	vector<vector<double>> A;
+	vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
+	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
+	vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
+	A.push_back(A0); A.push_back(A1); A.push_back(A2);
+
+	double b[] = {-15000, -4000, -75};
+	vector<double> B(b, b + sizeof(b)/sizeof(double));
+
+	double ct[] = {-143, -60};
+	vector<double> CT(ct, ct + sizeof(ct)/sizeof(double));
+
+	vector<double> x;
+	double optimal = 0.0;
+	css.LPSolver(A, B, CT, x, optimal);
+	for(int i=0; i<x.size(); i++) printf("%f\t", x[i]);
+	printf("\nOptimal Solution: %f\n", optimal);
+
 	return 0;
 }

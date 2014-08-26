@@ -27,6 +27,9 @@
     <ClInclude Include="CSSimpleSolver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\lp_lib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\SVD_examples\lapacke_dgesvd_row.cpp">

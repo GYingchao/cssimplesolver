@@ -10,6 +10,7 @@
 #include <iostream>
 //#include <Cholmod_solver_traits.h>
 #include "lapacke.h"
+#include "lp_lib.h"
 
 #define min(a,b) ((a)>(b)?(b):(a))
 #define max(a,b) ((a)<(b)?(b):(a))
@@ -40,7 +41,9 @@ public:
 	bool L1Solver(vector<vector<double>> &A, vector<double> &b);
 	bool OMPSolver(vector<vector<double>> &A, vector<double> &b);
 
-	bool solve(vector<vector<double>> &A, vector<double> &b, vector<double>& e);
+	bool LPSolver(vector<vector<double>> &A, vector<double> &b, vector<double> &CT, vector<double> &x, double &optimal);
+
+	bool Solve(vector<vector<double>> &A, vector<double> &b, vector<double>& e);
 
 //private:
 	//cholmod_common c;
