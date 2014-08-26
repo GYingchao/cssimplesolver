@@ -1,5 +1,5 @@
 #include "CSSimpleSolver.h"
-using namespace std;
+//using namespace std;
 
 bool CSSimpleSolver::parser(FILE *f, vector<vector<double>> &A, vector<double> &b)
 {
@@ -11,8 +11,6 @@ bool CSSimpleSolver::parser(FILE *f, vector<vector<double>> &A, vector<double> &
 
 bool CSSimpleSolver::L1Solver(vector<vector<double>> &A, vector<double> &b)
 {
-	// Find a proper left null space of A, F, s.t. FA = 0;
-	vector<vector<double>> F = leftNullSpace(A);
 	return false;
 }
 
@@ -132,7 +130,7 @@ bool CSSimpleSolver::LPSolver(vector<vector<double>> &A, vector<double> &b, vect
 			return false;
 		}
 	} else {
-		cout << "Error: Constraint matrix A is empty when solving LP!" << endl;
+		std::cout << "Error: Constraint matrix A is empty when solving LP!" << std::endl;
 		return false;
 	}
 }
@@ -142,25 +140,96 @@ bool CSSimpleSolver::LPSolver(vector<vector<double>> &A, vector<double> &b, vect
 	e is the error vector to be minimized, which is sparse;
 	b is the measurement vector.
 */
-bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<double> &e) 
+bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<double> &x, vector<double> &e) 
 {
-	// First we need to eliminate A
-	vector<vector<double>> F = leftNullSpace(A);
-	if(F.size() != 0) {
-		// Then we do the l1-minimization for e, s.t. Fe = Fb.
-		vector<vector<double>> Y;
-		vector<vector<double>> B;
-		B.push_back(b);
-		multiply_matrix(F, B, Y);
+	//// First we need to eliminate A
+	//vector<vector<double>> F = leftNullSpace(A);
+	//if(F.size() != 0) {
+	//	// Then we do the l1-minimization for e, s.t. Fe = Fb.
+	//	vector<vector<double>> Y;
+	//	vector<vector<double>> B;
+	//	B.push_back(b);
+	//	multiply_matrix(F, B, Y);
 
-		// Then we solve for min|e|, s.t. Fe = Y.
+	//	// Then we solve for min|e|, s.t. Fe = Y.
+	//	  
+	//	
 
+	//} else {
+	//	printf("The left nullspace of A is empty!!!\n");
+	//	return false;
+	//} 
 
+	/* Alternative
+		To solve P: min|e|, s.t. Fe = Y;
+		We can solve the equivalent problem P': min|e - Ah|;
+		Which can be re-expressed as an LP: min 1't, -t <= b-Ag <= t.
+		Which can be further denoted as: min [0 1'][g t]'   s.t.   [A I][g t]' >= y && [-A I][g t]' >= -y;
+		Let S = [A I; -A I], v = [g t], Y = [y -y]. CT = [0 1'];
+	*/
 
+	if(!A.empty()) {
+		int m = A.size();
+		int n = A[0].size();
+		// Construct S
+		vector<vector<double>> S;
+		for(int i=0; i<m; i++) {
+			S.push_back(vector<double>());
+			for(int j=0; j<n; j++) {
+				S[i].push_back(A[i][j]);
+			}
+			for(int k=0; k<m; k++) {
+				S[i].push_back(i==k);
+			}
+		}
+		for(int i=m; i<2*m; i++) {
+			S.push_back(vector<double>());
+			for(int j=0; j<n; j++) {
+				S[i].push_back(-1*A[i-m][j]);
+			}
+			for(int k=0; k<m; k++) {
+				S[i].push_back((i-m)==k);
+			}
+		}
+
+		// variable vector v
+		vector<double> v(n+m, 0.0);
+
+		// constant vector Y
+		vector<double> Y(2*m, 0.0);
+		for(int i=0; i<m; i++) {
+			Y[i] = b[i];
+		}
+		for(int i=m; i<2*m; i++) {
+			Y[i] = -1*b[i-m];
+		}
+		
+		// Construct objective function
+		vector<double> CT(m+n, 0.0);
+		for(int i=n; i<m+n; i++) {
+			CT[i] = 1.0;
+		}
+
+		/*** Solve: min CT*v, s.t. S*v >= Y ***/
+		vector<double> solution(m+n, 0.0);
+		double optimal;
+		bool success = LPSolver(S, Y, CT, solution, optimal);
+		if(success) {
+			for(int i=0; i<n; i++) {
+				x[i] = solution[i];
+			}
+			for(int i=n; i<m+n; i++) {
+				e[i-n] = solution[i];
+			}
+			return true;
+		} else {
+			std::cout << "LP solver failed!!" << std::endl;
+			return false;
+		}
 	} else {
-		printf("The left nullspace of A is empty!!!\n");
+		std::cout << "ERROR: A is empty when solving LP!!" << std::endl;
 		return false;
-	} 
+	}
 }
 
 // Compute Ax = 0, return basis vectors of solution space 
@@ -186,7 +255,7 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 			}
 			// Solve Sx = o
 			if(!solver.linear_solver(S, o, x)) {
-				cout << "Error: Solving nullspace failed!" << endl;
+				std::cout << "Error: Solving nullspace failed!" << std::endl;
 			} else {
 				// Naively, construct the nullspace by basic unit vectors of x
 				int xm = x.size();
@@ -198,7 +267,7 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 				}
 			}
 		//} else {
-			//cout << "Matrix format error!" << endl;
+			//std::cout << "Matrix format error!" << std::endl;
 		//}
 		*/
 
@@ -262,7 +331,7 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 		delete s, u, vt;
 		//printf("startIndex %d\n", startIndex);
 		if(startIndex == n) {
-			cout << "The nullspace of matrix is empty!" << endl;
+			std::cout << "The nullspace of matrix is empty!" << std::endl;
 			return tem;
 		}
 
@@ -278,9 +347,9 @@ vector<vector<double>> CSSimpleSolver::nullSpace(const vector<vector<double>> &A
 		}
 		
 	} else {
-		cout << "Null pointer of A in computing nullspace!" << endl;
+		std::cout << "Null pointer of A in computing nullspace!" << std::endl;
 	}
-	//cout << "tem size: " << tem.size() << endl;
+	//std::cout << "tem size: " << tem.size() << std::endl;
 	return tem;
 }
 
@@ -315,7 +384,7 @@ vector<vector<double>> CSSimpleSolver::leftNullSpace(const vector<vector<double>
 			}
 		}
 	} else {
-		cout << "Error: Compute left null space failed!" << endl;
+		std::cout << "Error: Compute left null space failed!" << std::endl;
 	}
 	return F;
 }
@@ -380,9 +449,9 @@ int main()
 	/*vector<vector<double>> x = css.leftNullSpace(A);
 	for(int i=0; i<x.size(); i++) {
 		for(int j=0; j<x[0].size()-1; j++) {
-			cout << x[i][j] << "\t" ;
+			std::cout << x[i][j] << "\t" ;
 		}
-		cout << x[i][x[0].size()-1] << endl;
+		std::cout << x[i][x[0].size()-1] << std::endl;
 	}*/
 
 	// Test matrix multiplication
@@ -396,9 +465,9 @@ int main()
 	css.multiply_matrix(A, B, C);
 	for(int i=0; i<C.size(); i++) {
 		for(int j=0; j<C[0].size(); j++) {
-			cout << C[i][j] << "\t";
+			std::cout << C[i][j] << "\t";
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}*/
 
 	// Test LPSolver()
@@ -425,3 +494,4 @@ int main()
 
 	return 0;
 }
+	

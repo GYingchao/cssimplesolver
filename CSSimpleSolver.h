@@ -43,7 +43,7 @@ public:
 
 	bool LPSolver(vector<vector<double>> &A, vector<double> &b, vector<double> &CT, vector<double> &x, double &optimal);
 
-	bool Solve(vector<vector<double>> &A, vector<double> &b, vector<double>& e);
+	bool Solve(vector<vector<double>> &A, vector<double> &b, vector<double> &x, vector<double>& e);
 
 //private:
 	//cholmod_common c;
