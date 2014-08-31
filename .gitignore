@@ -1,6 +1,6 @@
 #VS project folders
-/[Dd]ebug/
-/[Rr]elease/
+/[Dd]ebug*/
+/[Rr]elease*/
 
 #VS project files
 /*.vcxproj
