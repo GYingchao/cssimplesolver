@@ -1,6 +1,8 @@
-﻿Build started 8/26/2014 11:36:08 PM.
-     1>Project "D:\research\LAPACKE_examples\LAPACKE_examples\example_ZGESV_rowmajor\example_ZGESV_rowmajor.vcxproj" on node 2 (Build target(s)).
-     1>InitializeBuildStatus:
+﻿Build started 8/31/2014 3:15:57 PM.
+     1>Project "D:\research\LAPACKE_examples\LAPACKE_examples\example_ZGESV_rowmajor\example_ZGESV_rowmajor.vcxproj" on node 2 (Rebuild target(s)).
+     1>_PrepareForClean:
+         Deleting file "Release\cornerSnapping.lastbuildstate".
+       InitializeBuildStatus:
          Creating "Release\cornerSnapping.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ID:\research\LAPACKE_examples\LAPACKE_examples\/include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D ADD_ /D HAVE_LAPACK_CONFIG_H /D LAPACK_COMPLEX_STRUCTURE /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt ..\SVD_examples\lapacke_dgesvd_row.cpp CSSimpleSolver.cpp
@@ -22,8 +24,8 @@
        FinalizeBuildStatus:
          Deleting file "Release\cornerSnapping.unsuccessfulbuild".
          Touching "Release\cornerSnapping.lastbuildstate".
-     1>Done Building Project "D:\research\LAPACKE_examples\LAPACKE_examples\example_ZGESV_rowmajor\example_ZGESV_rowmajor.vcxproj" (Build target(s)).
+     1>Done Building Project "D:\research\LAPACKE_examples\LAPACKE_examples\example_ZGESV_rowmajor\example_ZGESV_rowmajor.vcxproj" (Rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:01.71
+Time Elapsed 00:00:02.55
