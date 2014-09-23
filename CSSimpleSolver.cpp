@@ -150,22 +150,23 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 	//	vector<vector<double>> B;
 	//	B.push_back(b);
 	//	multiply_matrix(F, B, Y);
-
 	//	// Then we solve for min|e|, s.t. Fe = Y.
 	//	  
 	//	
-
 	//} else {
 	//	printf("The left nullspace of A is empty!!!\n");
 	//	return false;
 	//} 
 
+	/* =================================== Above code is obsolete ============================================ */
+
 	/* Alternative
-		To solve P: min|e|, s.t. Fe = Y;
-		We can solve the equivalent problem P': min|e - Ah|;
+		To solve P: min|e|, s.t. Fe = Y; 
+		We can solve the equivalent problem P': min|b - Ag|_l1;
 		Which can be re-expressed as an LP: min 1't, -t <= b-Ag <= t.
-		Which can be further denoted as: min [0 1'][g t]'   s.t.   [A I][g t]' >= y && [-A I][g t]' >= -y;
-		Let S = [A I; -A I], v = [g t], Y = [y -y]. CT = [0 1'];
+		Which can be further denoted as: min [0'; 1'][g; t]'   s.t.   [-A I; A -I; 0 I][g; t]' >= [-b; b; 0]';
+		Let S = [-A I; A -I; 0 I], v = [g; t], Y = [-b; b; 0]. CT = [0' 1'];
+		So dim(S) = (3*m, n+m), dim(v) = (n+m, 1), dim(Y) = (3*m, 1), dim(CT) = (1, n+m); 
 	*/
 
 	if(!A.empty()) {
@@ -176,7 +177,7 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 		for(int i=0; i<m; i++) {
 			S.push_back(vector<double>());
 			for(int j=0; j<n; j++) {
-				S[i].push_back(A[i][j]);
+				S[i].push_back(-A[i][j]);
 			}
 			for(int k=0; k<m; k++) {
 				S[i].push_back(i==k);
@@ -185,10 +186,19 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 		for(int i=m; i<2*m; i++) {
 			S.push_back(vector<double>());
 			for(int j=0; j<n; j++) {
-				S[i].push_back(-1*A[i-m][j]);
+				S[i].push_back(A[i-m][j]);
 			}
 			for(int k=0; k<m; k++) {
-				S[i].push_back((i-m)==k);
+				S[i].push_back(((i-m)==k)*(-1));
+			}
+		}
+		for (int i = 2*m; i<3 * m; i++) {
+			S.push_back(vector<double>());
+			for (int j = 0; j<n; j++) {
+				S[i].push_back(0.0);
+			}
+			for (int k = 0; k<m; k++) {
+				S[i].push_back((i - 2*m) == k);
 			}
 		}
 
@@ -196,12 +206,15 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 		vector<double> v(n+m, 0.0);
 
 		// constant vector Y
-		vector<double> Y(2*m, 0.0);
+		vector<double> Y(3*m, 0.0);
 		for(int i=0; i<m; i++) {
-			Y[i] = b[i];
+			Y[i] = -b[i];
 		}
 		for(int i=m; i<2*m; i++) {
-			Y[i] = -1*b[i-m];
+			Y[i] = b[i-m];
+		}
+		for (int i = 2 * m; i < 3 * m; i++) {
+			Y[i] = 0.0;
 		}
 		
 		// Construct objective function
@@ -227,7 +240,7 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 			return false;
 		}
 	} else {
-		std::cout << "ERROR: A is empty when solving LP!!" << std::endl;
+		std::cout << "ERROR: A is empty when solver starts!!!" << std::endl;
 		return false;
 	}
 }
@@ -421,7 +434,7 @@ bool CSSimpleSolver::multiply_matrix(vector<vector<double>> &A, vector<vector<do
 		return true;
 	}
 }
-//--- For test ---//
+////--- For test ---//
 int main()
 {
 	//// Test nullSpace()
