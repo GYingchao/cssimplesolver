@@ -164,8 +164,8 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 		To solve P: min|e|, s.t. Fe = Y; 
 		We can solve the equivalent problem P': min|b - Ag|_l1;
 		Which can be re-expressed as an LP: min 1't, -t <= b-Ag <= t.
-		Which can be further denoted as: min [0'; 1'][g; t]'   s.t.   [-A I; A -I; 0 I][g; t]' >= [-b; b; 0]';
-		Let S = [-A I; A -I; 0 I], v = [g; t], Y = [-b; b; 0]. CT = [0' 1'];
+		Which can be further denoted as: min [0'; 1'][g; t]'   s.t.   [-A I; A I; 0 I][g; t]' >= [-b; b; 0]';
+		Let S = [-A I; A I; 0 I], v = [g; t], Y = [-b; b; 0]. CT = [0' 1'];   
 		So dim(S) = (3*m, n+m), dim(v) = (n+m, 1), dim(Y) = (3*m, 1), dim(CT) = (1, n+m); 
 	*/
 
@@ -189,7 +189,7 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 				S[i].push_back(A[i-m][j]);
 			}
 			for(int k=0; k<m; k++) {
-				S[i].push_back(((i-m)==k)*(-1));
+				S[i].push_back((i-m)==k);
 			}
 		}
 		for (int i = 2*m; i<3 * m; i++) {
