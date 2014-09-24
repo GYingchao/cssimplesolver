@@ -107,7 +107,7 @@ bool CSSimpleSolver::LPSolver(vector<vector<double>> &A, vector<double> &b, vect
 
 				/* variable values */
 				get_variables(lp, row);
-				for(j = 0; j < n; j++) x.push_back(row[j]);
+				for(j = 0; j < n; j++) x[j] = row[j];
 				  //printf("%s: %f\n", get_col_name(lp, j + 1), row[j]);
 
 				// Save the model for reuse
@@ -140,7 +140,7 @@ bool CSSimpleSolver::LPSolver(vector<vector<double>> &A, vector<double> &b, vect
 	e is the error vector to be minimized, which is sparse;
 	b is the measurement vector.
 */
-bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<double> &x, vector<double> &e) 
+bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<double> &x, vector<double> &e, double& optimal) 
 {
 	//// First we need to eliminate A
 	//vector<vector<double>> F = leftNullSpace(A);
@@ -225,7 +225,7 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 
 		/*** Solve: min CT*v, s.t. S*v >= Y ***/
 		vector<double> solution(m+n, 0.0);
-		double optimal;
+		//double optimal;
 		bool success = LPSolver(S, Y, CT, solution, optimal);
 		if(success) {
 			for(int i=0; i<n; i++) {
@@ -234,6 +234,7 @@ bool CSSimpleSolver::Solve(vector<vector<double>> &A, vector<double> &b, vector<
 			for(int i=n; i<m+n; i++) {
 				e[i-n] = solution[i];
 			}
+			//cout << "optimal value is :\t" << optimal << endl;
 			return true;
 		} else {
 			std::cout << "LP solver failed!!" << std::endl;
@@ -483,27 +484,65 @@ int main()
 		std::cout << std::endl;
 	}*/
 
-	// Test LPSolver()
-	double a0[] = {-120, -210};
-	double a1[] = {-110, -30};
-	double a2[] = {-1, -1};
+	//// Test LPSolver()
+	//double a0[] = {-120, -210};
+	//double a1[] = {-110, -30};
+	//double a2[] = {-1, -1};
+	//vector<vector<double>> A;
+	//vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
+	//vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
+	//vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
+	//A.push_back(A0); A.push_back(A1); A.push_back(A2);
+
+	//double b[] = {-15000, -4000, -75};
+	//vector<double> B(b, b + sizeof(b)/sizeof(double));
+
+	//double ct[] = {-143, -60};
+	//vector<double> CT(ct, ct + sizeof(ct)/sizeof(double));
+
+	//vector<double> x;
+	//double optimal = 0.0;
+	//css.LPSolver(A, B, CT, x, optimal);
+	//for(int i=0; i<x.size(); i++) printf("%f\t", x[i]);
+	//printf("\nOptimal Solution: %f\n", optimal);
+
+	//	Test Solve()
+	double a0[] = {1, 2, 3, 5};
+	double a1[] = {4, 6, 9, 2};
+	double a2[] = {7, 3, 0, 4};
+	double a3[] = {6, 8, 7, 8};
+	double a4[] = {5, 9, 2, 4};
+	double a5[] = {3, 3, 1, 2};
 	vector<vector<double>> A;
 	vector<double> A0(a0, a0 + sizeof(a0)/sizeof(double));
 	vector<double> A1(a1, a1 + sizeof(a1)/sizeof(double));
 	vector<double> A2(a2, a2 + sizeof(a2)/sizeof(double));
+	vector<double> A3(a3, a3 + sizeof(a3)/sizeof(double));
+	vector<double> A4(a4, a4 + sizeof(a4)/sizeof(double));
+	vector<double> A5(a5, a5 + sizeof(a5)/sizeof(double));
 	A.push_back(A0); A.push_back(A1); A.push_back(A2);
+	A.push_back(A3); A.push_back(A4); A.push_back(A5);
 
-	double b[] = {-15000, -4000, -75};
+	double b[] = {5, 2, 7, 3, 4, 1};
 	vector<double> B(b, b + sizeof(b)/sizeof(double));
 
-	double ct[] = {-143, -60};
-	vector<double> CT(ct, ct + sizeof(ct)/sizeof(double));
-
-	vector<double> x;
+	vector<double> x(4, 1.0);
+	vector<double> e(6, 1.0);
 	double optimal = 0.0;
-	css.LPSolver(A, B, CT, x, optimal);
-	for(int i=0; i<x.size(); i++) printf("%f\t", x[i]);
-	printf("\nOptimal Solution: %f\n", optimal);
+	css.Solve(A, B, x, e, optimal);
+
+	cout << "\nOptimal objective function value is: \n" << optimal << endl;
+
+	cout << "\nx is:\n";
+	for (int i = 0; i < x.size(); i++) {
+		cout << x[i] << "\n";
+	}
+
+	cout << "\ne is:\n";
+	for (int i = 0; i < e.size(); i++) {
+		cout << e[i] << "\n";
+	}
+	//	Test result: Exactly same with Matlab linprog solution
 
 	return 0;
 }
